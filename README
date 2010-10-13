@@ -1,0 +1,77 @@
+Feather is a tarsnap script written in python that performs and maintains a set
+of backups as defined by a yaml configuration file.  
+
+Features: 
+ - Dynamic scheduling
+ - Keep an arbitrary number of backups of each schedule type
+ - Restrict schedules based on time of day
+ - Restrict feather run to a certain amount of wall time (max_runtime)
+
+Feather is designed to be run from cron like this:
+
+ 0 * * * * /usr/local/bin/feather /usr/local/etc/feather.yaml 
+
+The best way to understand feather is to read an example configuration file:
+
+# Global paths
+cachedir: /usr/home/drue/tarsnap/cachedir
+keyfile: /usr/home/drue/tarsnap/tarsnap.key
+binpath: /usr/local/bin/
+
+# perform a checkpoint every checkpoint_bytes
+checkpoint_bytes: 104857600 # 100MB
+
+# Kill the script after N seconds.
+# Since BACKUPS are run in the order listed, this allows prioritization
+# of backups.
+max_runtime: 850
+
+# Define the schedule
+#
+# period: Seconds.  A backup is taken every period.
+# always_keep: Number of backups to keep of a particular period, before 
+#              pruning old backups.  Backups younger than now()-period are
+#              never removed.
+# inherits: inherit from another defined schedule.  i.e. if WEEKLY inherits
+#           MONTHLY, and you ask for WEEKLY backups, you will get WEEKLY 
+#           and MONTHLY.
+# before/after: Restrict running to a certain time of day (UTC)
+#
+schedule:
+  - monthly:
+    - period: 2592000 # 30 days
+    - always_keep: 12
+    - before: "0600"
+  - weekly:
+    - period: 604800 # 7 days
+    - always_keep: 6
+    - after: "0200"
+    - before: "0600"
+    - inherits: monthly
+  - daily:
+    - period: 86400 # 1 day
+    - always_keep: 14
+    - after: "0200"
+    - before: "0600"
+    - inherits: weekly
+  - hourly:
+    - period: 3600
+    - always_keep: 24
+    - inherits: daily
+  - realtime:
+    - period: 900
+    - always_keep: 10
+    - inherits: hourly
+
+# Define individual backups
+backups:
+  - _usr_local:
+    - schedule: daily
+    - path: /usr/local
+  - _etc:
+    - schedule: realtime
+    - path: /etc
+  - music:
+    - schedule: monthly
+    - path: /home/joe/music
+

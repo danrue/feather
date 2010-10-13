@@ -20,6 +20,7 @@ max_runtime: 850
 # inherits: inherit from another defined schedule.  i.e. if WEEKLY inherits
 #           MONTHLY, and you ask for WEEKLY backups, you will get WEEKLY 
 #           and MONTHLY.
+# before/after: Restrict running to a certain time of day (UTC)
 #
 schedule:
   - monthly:
@@ -47,7 +48,15 @@ schedule:
     - always_keep: 10
     - inherits: hourly
 
+# Define individual backups
 backups:
-  - _usr_home_drue_irclogs:
+  - _usr_local:
+    - schedule: daily
+    - path: /usr/local
+  - _etc:
     - schedule: realtime
-    - path: /usr/home/drue/irclogs
+    - path: /etc
+  - music:
+    - schedule: monthly
+    - path: /home/joe/music
+
