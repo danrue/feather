@@ -32,7 +32,7 @@ max_runtime: 850
 # always_keep: Number of backups to keep of a particular period, before 
 #              pruning old backups.  Backups younger than now()-period are
 #              never removed.
-# inherits: inherit from another defined schedule.  i.e. if WEEKLY inherits
+# implies:  Include another defined schedule.  i.e. if WEEKLY implies
 #           MONTHLY, and you ask for WEEKLY backups, you will get WEEKLY 
 #           and MONTHLY.
 # before/after: Restrict running to a certain time of day (UTC)
@@ -47,21 +47,21 @@ schedule:
     - always_keep: 6
     - after: "0200"
     - before: "0600"
-    - inherits: monthly
+    - implies: monthly
   - daily:
     - period: 86400 # 1 day
     - always_keep: 14
     - after: "0200"
     - before: "0600"
-    - inherits: weekly
+    - implies: weekly
   - hourly:
     - period: 3600
     - always_keep: 24
-    - inherits: daily
+    - implies: daily
   - realtime:
     - period: 900
     - always_keep: 10
-    - inherits: hourly
+    - implies: hourly
 
 # Define individual backups
 backups:
