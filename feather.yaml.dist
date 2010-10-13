@@ -7,9 +7,7 @@ binpath: /usr/local/bin/
 checkpoint_bytes: 104857600 # 100MB
 
 # Kill the script after N seconds.
-# Since BACKUPS are run in the order listed, this allows prioritization
-# of backups.
-max_runtime: 850
+max_runtime: 3600
 
 # Define the schedule
 #
