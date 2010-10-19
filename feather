@@ -130,11 +130,13 @@ class pr_tarsnap():
 
     archive_list = []
 
-    def __init__(self, yaml_file, verbosity=None):
+    def __init__(self, yaml_file, verbosity=None, dry_run=False):
         if verbosity: 
             self.verbosity = verbosity
         else:
             self.verbosity = 0
+
+	self.dry_run = dry_run
 
         f = open(yaml_file)
         config = yaml.load(f.read())
@@ -270,6 +272,8 @@ class pr_tarsnap():
                        "--checkpoint-bytes", str(self.checkpoint_bytes),
                        "--one-file-system", 
                        "-c", "-f", archive_name, backup_path]
+                if self.dry_run:
+                    cmd += ["--dry-run"]
                 if self.verbosity > 2: 
                     print cmd
                 output = self.execute(cmd)
@@ -280,11 +284,7 @@ class pr_tarsnap():
     def prune_backups(self):
         ''' 
             prune_backups checks two conditions before removing an archive.
-            1) That the theoretical amount of backups exist.  For instance, 
-               if we keep weekly backups for 6 weeks, do not delete any weekly
-               backups if we only have 5 of them (even if they are older).  
-               This ensures that if backups are broken, old archives will never
-               automatically be removed.
+            1) That there are 'always_keep' number of backups, AND
             2) That the archive to remove is older than the predefined period
                of time.
 
@@ -302,10 +302,10 @@ class pr_tarsnap():
                 continue # unrecognized archive
 
             (path, ts, type) = f.groups()
-            if type in quantity:
-                quantity[type] += 1
+            if path+type in quantity:
+                quantity[path+type] += 1
             else:
-                quantity[type] = 1
+                quantity[path+type] = 1
 
         for archive in self.archive_list:
             f = pattern.match(archive)
@@ -323,12 +323,13 @@ class pr_tarsnap():
 
             if ((datetime.datetime.utcnow()-ts) > 
                          self.schedule.schedule_timedelta(type)):
-                if self.schedule.rotate(type, quantity[type]):
+                if self.schedule.rotate(type, quantity[path+type]):
                     if self.verbosity > 0: print "Deleting archive", archive
                     quantity[type] -= 1 # remove an item from quantity dict
                     cmd = self.tarsnap_cmd() + ["-d", "-f", archive]
                     if self.verbosity > 2: print cmd
-                    output = self.execute(cmd)
+                    if not self.dry_run:
+                        output = self.execute(cmd)
                     if self.verbosity > 2: print output
 
 
@@ -339,6 +340,9 @@ def main():
     parser.add_option("-v", action="count", dest="verbosity", 
                       help="Verbosity; Additional -v options will provide "
                            "additional detail.")
+    parser.add_option("--dry-run", action="store_true", dest="dry_run", 
+                      default=False, help="Do not create new archives or "
+                      "delete old archives.")
 
     (options, args) = parser.parse_args()
     if len(args) != 1:
@@ -347,7 +351,7 @@ def main():
     PIDFILE = "/tmp/feather.pid"
     lock(PIDFILE)
     os.nice(20)
-    b = pr_tarsnap(args[0], options.verbosity)
+    b = pr_tarsnap(args[0], options.verbosity, options.dry_run)
     b.run_backups()
     b.prune_backups()
 
