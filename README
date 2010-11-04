@@ -13,13 +13,14 @@ Feather is designed to be run from cron like this:
 
 The best way to understand feather is to read an example configuration file:
 
-# Global paths
+
+# Global paths, if different from default
 cachedir: /usr/home/drue/tarsnap/cachedir
 keyfile: /usr/home/drue/tarsnap/tarsnap.key
 binpath: /usr/local/bin/
 
-# perform a checkpoint every checkpoint_bytes
-checkpoint_bytes: 104857600 # 100MB
+# perform a checkpoint every checkpoint_bytes, don't cross filesystems
+backup_args: "--one-file-system --checkpoint-bytes 104857600"
 
 # Kill the script after N seconds.
 max_runtime: 3600
