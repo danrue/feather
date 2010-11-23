@@ -137,7 +137,7 @@ class pr_tarsnap():
         else:
             self.verbosity = 0
 
-	self.dry_run = dry_run
+        self.dry_run = dry_run
 
         f = open(yaml_file)
         config = yaml.load(f.read())
@@ -287,7 +287,7 @@ class pr_tarsnap():
                     print output
 
 
-    def prune_parts(self, days=14):
+    def prune_parts(self, days=7):
         '''
             Tarsnap saves .part files when used with checkpoint_bytes, and 
             if a backup does not complete for some reason. 
@@ -309,7 +309,7 @@ class pr_tarsnap():
                 continue 
 
             if ((datetime.datetime.utcnow()-ts) > 
-                         datetime.timedelta(days=days)
+                         datetime.timedelta(days=days)):
                 if self.verbosity > 0: print "Deleting archive", archive
                 cmd = self.tarsnap_cmd() + ["-d", "-f", archive]
                 if self.verbosity > 2: print cmd
@@ -361,7 +361,7 @@ class pr_tarsnap():
                          self.schedule.schedule_timedelta(type)):
                 if self.schedule.rotate(type, quantity[path+type]):
                     if self.verbosity > 0: print "Deleting archive", archive
-                    quantity[type] -= 1 # remove an item from quantity dict
+                    quantity[path+type] -= 1 # remove an item from quantity dict
                     cmd = self.tarsnap_cmd() + ["-d", "-f", archive]
                     if self.verbosity > 2: print cmd
                     if not self.dry_run:
