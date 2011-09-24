@@ -8,7 +8,6 @@ as defined in a yaml configuration file.
 TODO:
     - Order of backups (!!omap)
     - use localtime instead of hardcoding UTC
-    - make "path" a list so you can have N paths per backup.
 
  ----------------------------------------------------------------------------
  "THE BEER-WARE LICENSE" (Revision 43):
@@ -164,6 +163,8 @@ class pr_tarsnap():
         for item in config['backups']:
             #{'_usr_home_drue_irclogs': 
             # [{'schedule': 'realtime'}, {'path': '/usr/home/drue/irclogs'}]}
+            # OR
+            # {'path': ['/path1', '/path2', '/file']}
             key = item.keys()[0]
             self.backups[key] = {}
             for param in item[key]:
@@ -173,9 +174,13 @@ class pr_tarsnap():
                 raise ConfigError, "'schedule' not defined for backup %s" % key
             if 'path' not in self.backups[key]:
                 raise ConfigError, "'path' not defined for backup %s" % key
-            if not os.path.isdir(self.backups[key]['path']):
-                raise ConfigError, "path does not exist: %s" % \
-                                   self.backups[key]['path']
+
+            path = self.backups[key]['path']
+            if isinstance(path, list):
+                for item in path:
+                    self.check_valid_path(item)
+            else:
+                self.check_valid_path(path)
 
         self.populate_archive_list()
 
@@ -277,7 +282,11 @@ class pr_tarsnap():
                 cmd = self.tarsnap_cmd()
                 if self.backup_args:
                     cmd += self.backup_args
-                cmd += ["-c", "-f", archive_name, backup_path]
+                cmd += ["-c", "-f", archive_name]
+                if isinstance(backup_path, list):
+                    cmd.extend(backup_path)
+                else:
+                    cmd += [backup_path]
                 if self.dry_run:
                     cmd += ["--dry-run"]
                 if self.verbosity > 2: 
@@ -367,6 +376,11 @@ class pr_tarsnap():
                     if not self.dry_run:
                         output = self.execute(cmd)
                     if self.verbosity > 2: print output
+
+    def check_valid_path(self, path):
+        if not (os.path.isdir(path) or os.path.isfile(path)):
+            raise ConfigError, "path does not exist: %s" % path
+
 
 
 def main():
