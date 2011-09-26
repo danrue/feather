@@ -63,6 +63,8 @@ schedule:
     - implies: hourly
 
 # Define individual backups
+# Path can be a directory or a file.
+# Path can be a list or a single item.
 backups:
   - _usr_local:
     - schedule: daily
@@ -72,5 +74,7 @@ backups:
     - path: /etc
   - music:
     - schedule: monthly
-    - path: /home/joe/music
+    - path: 
+      - /home/joe/music
+      - /home/bob/music
 
