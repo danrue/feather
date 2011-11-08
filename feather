@@ -12,9 +12,9 @@ TODO:
  ----------------------------------------------------------------------------
  "THE BEER-WARE LICENSE" (Revision 43):
 
- <drue@therub.org> wrote this file. As long as you retain this notice and 
- never sue us for anything, you can do whatever you want with this stuff.  
- If we meet some day, and you think this stuff is worth it, you can buy me 
+ <drue@therub.org> wrote this file. As long as you retain this notice and
+ never sue us for anything, you can do whatever you want with this stuff.
+ If we meet some day, and you think this stuff is worth it, you can buy me
  a beer in return. -Dan Rue
  ----------------------------------------------------------------------------
 
@@ -39,11 +39,12 @@ class backup_schedule(set):
         # Reformat schedule into something a little more useable.
         self.schedule = {}
         for item in schedule_from_yaml:
-            #{'WEEKLY': [{'period': 604800}, {'always_keep': 6}, 
-            #            {'implies': 'MONTHLY'}]}, 
+            #{'WEEKLY': [{'period': 604800}, {'always_keep': 6},
+            #            {'implies': 'MONTHLY'}]},
             key = item.keys()[0]
             self.schedule[key] = {}
             for param in item[key]:
+                param_key = param.keys()[0]
                 param_key = param.keys()[0]
                 if param_key == 'period':
                     self.schedule[key][param_key] = \
@@ -131,7 +132,7 @@ class pr_tarsnap():
     archive_list = []
 
     def __init__(self, yaml_file, verbosity=None, dry_run=False):
-        if verbosity: 
+        if verbosity:
             self.verbosity = verbosity
         else:
             self.verbosity = 0
@@ -161,7 +162,7 @@ class pr_tarsnap():
         # Reformat schedule into something a little more useable.
         self.backups = {}
         for item in config['backups']:
-            #{'_usr_home_drue_irclogs': 
+            #{'_usr_home_drue_irclogs':
             # [{'schedule': 'realtime'}, {'path': '/usr/home/drue/irclogs'}]}
             # OR
             # {'path': ['/path1', '/path2', '/file']}
@@ -174,6 +175,10 @@ class pr_tarsnap():
                 raise ConfigError, "'schedule' not defined for backup %s" % key
             if 'path' not in self.backups[key]:
                 raise ConfigError, "'path' not defined for backup %s" % key
+            if 'exclude'in self.backups[key]:
+                exclude = self.backups[key]['exclude']
+            else:
+                exclude = []
 
             path = self.backups[key]['path']
             if isinstance(path, list):
@@ -209,7 +214,7 @@ class pr_tarsnap():
     def populate_archive_list(self):
         cmd = self.tarsnap_cmd() + ["--list-archives"]
 
-        if self.verbosity > 1: 
+        if self.verbosity > 1:
             print "Listing archives using tarsnap --list-archives"
             if self.verbosity > 2: print cmd
         output = self.execute(cmd)
@@ -218,29 +223,29 @@ class pr_tarsnap():
         self.archive_list.sort()
 
     def exists(self, base, schedule):
-        if self.verbosity > 1: 
+        if self.verbosity > 1:
             print "Checking if the following exists: %s %s" % (base, schedule)
         pattern = re.compile("^(.*)-(\d+)UTC-(\w+)$")
 
         # Loop through the list of archives to see if we can find one that
         # is within the schedule for the given path.
-        # for instance, if path is /foo/bar and schedule is "DAILY", 
+        # for instance, if path is /foo/bar and schedule is "DAILY",
         # look for an archive of /foo/bar made within 24h.
-        for archive in self.archive_list: 
+        for archive in self.archive_list:
             f = pattern.match(archive)
             if not f:
-                sys.stderr.write("Archive label format unrecognized: %s\n" % 
+                sys.stderr.write("Archive label format unrecognized: %s\n" %
                                  archive)
                 continue # unrecognized archive
 
             (archivepath, ts, type) = f.groups()
             if archivepath == base and type == schedule:
-                try: 
+                try:
                     ts = datetime.datetime.strptime(ts, "%Y%m%d%H%M")
                 except:
                     sys.stderr.write("Unknown timestamp: %s\n" % archive)
-                    continue 
-                if ((datetime.datetime.utcnow()-ts) < 
+                    continue
+                if ((datetime.datetime.utcnow()-ts) <
                      self.schedule.schedule_timedelta(schedule)):
                     return True
 
@@ -257,6 +262,10 @@ class pr_tarsnap():
     def run_backups(self):
         for backup in self.backups:
             backup_path = self.backups[backup]['path']
+            if 'exclude' in self.backups[backup]:
+                excl_path = self.backups[backup]['exclude']
+            else:
+                excl_path = None
             backup_schedule = self.backups[backup]['schedule']
             try:
                 snapshots = self.schedule.get_schedule(backup_schedule)
@@ -264,7 +273,7 @@ class pr_tarsnap():
                 raise RecursionError, "Loop detected in backup configuration"
 
             for snapshot in snapshots:
-                if self.verbosity > 1: 
+                if self.verbosity > 1:
                     print "Processing", backup, snapshot
                 if self.exists(backup, snapshot):
                     # backup already existing within schedule window
@@ -277,47 +286,53 @@ class pr_tarsnap():
                     continue
                 ts = datetime.datetime.utcnow().strftime("%Y%m%d%H%MUTC")
                 archive_name = backup+"-"+ts+"-"+snapshot
-                if self.verbosity > 0: 
+                if self.verbosity > 0:
                     print "Taking backup", archive_name
                 cmd = self.tarsnap_cmd()
                 if self.backup_args:
                     cmd += self.backup_args
                 cmd += ["-c", "-f", archive_name]
+                if excl_path:
+                    if isinstance(excl_path, list):
+                        for pth in excl_path:
+                            cmd += ['--exclude', pth]
+                    else:
+                        cmd += ['--exclude', excl_path]
                 if isinstance(backup_path, list):
                     cmd.extend(backup_path)
                 else:
                     cmd += [backup_path]
                 if self.dry_run:
                     cmd += ["--dry-run"]
-                if self.verbosity > 2: 
+                if self.verbosity > 2:
                     print cmd
                 output = self.execute(cmd)
-                if self.verbosity > 2: 
+                if self.verbosity > 2:
                     print output
 
 
     def prune_parts(self, days=7):
         '''
-            Tarsnap saves .part files when used with checkpoint_bytes, and 
-            if a backup does not complete for some reason. 
+            Tarsnap saves .part files when used with checkpoint_bytes, and
+            if a backup does not complete for some reason.
 
             This function looks .part files older than 'days' and removes them.
         '''
         pattern = re.compile("^(.*)-(\d+)UTC-(\w+)\.part$")
-        for archive in self.archive_list: 
+        for archive in self.archive_list:
             f = pattern.match(archive)
             if not f:
                 continue # not a .part file
-    
+
             (path, ts, type) = f.groups()
 
-            try: 
+            try:
                 ts = datetime.datetime.strptime(ts, "%Y%m%d%H%M")
             except:
                 sys.stderr.write("Unknown timestamp: %s\n" % archive)
-                continue 
+                continue
 
-            if ((datetime.datetime.utcnow()-ts) > 
+            if ((datetime.datetime.utcnow()-ts) >
                          datetime.timedelta(days=days)):
                 if self.verbosity > 0: print "Deleting archive", archive
                 cmd = self.tarsnap_cmd() + ["-d", "-f", archive]
@@ -327,7 +342,7 @@ class pr_tarsnap():
                 if self.verbosity > 2: print output
 
     def prune_backups(self):
-        ''' 
+        '''
             prune_backups checks two conditions before removing an archive.
             1) That there are 'always_keep' number of backups, AND
             2) That the archive to remove is older than the predefined period
@@ -340,7 +355,7 @@ class pr_tarsnap():
 
         quantity = {}
         # Count up how many of each type of archive exist
-        for archive in self.archive_list: 
+        for archive in self.archive_list:
             f = pattern.match(archive)
             if not f:
                 sys.stderr.write("Unrecognizable archive: %s\n" % archive)
@@ -360,13 +375,13 @@ class pr_tarsnap():
 
             (path, ts, type) = f.groups()
 
-            try: 
+            try:
                 ts = datetime.datetime.strptime(ts, "%Y%m%d%H%M")
             except:
                 sys.stderr.write("Unknown timestamp: %s\n" % archive)
-                continue 
+                continue
 
-            if ((datetime.datetime.utcnow()-ts) > 
+            if ((datetime.datetime.utcnow()-ts) >
                          self.schedule.schedule_timedelta(type)):
                 if self.schedule.rotate(type, quantity[path+type]):
                     if self.verbosity > 0: print "Deleting archive", archive
@@ -387,10 +402,10 @@ def main():
 
     usage = "usage: %prog [options] config_file"
     parser = optparse.OptionParser(usage)
-    parser.add_option("-v", action="count", dest="verbosity", 
+    parser.add_option("-v", action="count", dest="verbosity",
                       help="Verbosity; Additional -v options will provide "
                            "additional detail.")
-    parser.add_option("--dry-run", action="store_true", dest="dry_run", 
+    parser.add_option("--dry-run", action="store_true", dest="dry_run",
                       default=False, help="Do not create new archives or "
                       "delete old archives.")
 
