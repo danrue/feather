@@ -77,4 +77,7 @@ backups:
     - path: 
       - /home/joe/music
       - /home/bob/music
+    - exclude:
+      - /home/joe/music/bieber # Not paying to back this up
+      - /home/bob/music/backstreet_boys #not paying to store this either
 
