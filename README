@@ -6,6 +6,8 @@ Features:
  - Keep an arbitrary number of backups of each schedule type
  - Restrict schedules based on time of day
  - Restrict feather run to a certain amount of wall time (max_runtime)
+ - Multiple backup paths per tarsnap 
+ - Multiple exclude list per tarsnap
 
 Feather is designed to be run from cron like this:
 
@@ -69,6 +71,7 @@ backups:
   - _usr_local:
     - schedule: daily
     - path: /usr/local
+    - exclude: /usr/local/bin
   - _etc:
     - schedule: realtime
     - path: /etc

@@ -53,6 +53,7 @@ backups:
   - _usr_local:
     - schedule: daily
     - path: /usr/local
+    - exclude: /usr/local/bin
   - _etc:
     - schedule: realtime
     - path: /etc
@@ -60,5 +61,7 @@ backups:
     - schedule: monthly
     - path: 
       - /home/joe/music
-      - /home/joe/music
-
+      - /home/bob/music
+    - exclude:
+      - /home/joe/music/bieber # Not paying to back this up
+      - /home/bob/music/backstreet_boys # not paying to store this either
