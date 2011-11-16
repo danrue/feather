@@ -105,7 +105,7 @@ class ConfigError(Exception):
     def __str__(self):
         return repr(self.value)
 
-class lock():
+class lock(object):
     def __init__(self, pidfile):
 
         if (os.path.isfile(pidfile)):
@@ -127,7 +127,7 @@ class lock():
         file(pidfile,'w+').write("%s" % str(os.getpid()))
 
 
-class pr_tarsnap():
+class pr_tarsnap(object):
 
     archive_list = []
 
