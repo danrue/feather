@@ -226,7 +226,7 @@ class pr_tarsnap(object):
   def exists(self, base, schedule):
     if self.verbosity > 1:
       print "Checking if the following exists: %s %s" % (base, schedule)
-    pattern = re.compile("^(.*)-(\d+)|(\d\d\d\d-\d\d-\d\d_\d\d:\d\d)_UTC-(\w+)$")
+    pattern = re.compile("^(.*)-(\d+|\d+-\d+-\d+_\d+:\d+)_?UTC-(\w+)$")
 
     # Loop through the list of archives to see if we can find one that
     # is within the schedule for the given path.
@@ -322,7 +322,7 @@ class pr_tarsnap(object):
 
       This function looks .part files older than 'days' and removes them.
     '''
-    pattern = re.compile("^(.*)-(\d+)|(\d\d\d\d-\d\d-\d\d_\d\d:\d\d)_UTC-(\w+)$")
+    pattern = re.compile("^(.*)-(\d+|\d+-\d+-\d+_\d+:\d+)_?UTC-(\w+)$")
     for archive in self.archive_list:
       f = pattern.match(archive)
       if not f:
@@ -358,7 +358,7 @@ class pr_tarsnap(object):
     '''
     self.populate_archive_list()
     self.archive_list.sort()
-    pattern = re.compile("^(.*)-(\d+)|(\d\d\d\d-\d\d-\d\d_\d\d:\d\d)_UTC-(\w+)$")
+    pattern = re.compile("^(.*)-(\d+|\d+-\d+-\d+_\d+:\d+)_?UTC-(\w+)$")
 
     quantity = {}
     # Count up how many of each type of archive exist
