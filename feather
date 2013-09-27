@@ -321,7 +321,7 @@ class pr_tarsnap(object):
 
             This function looks .part files older than 'days' and removes them.
         '''
-        pattern = re.compile("^(.*)-(\d+|\d+-\d+-\d+_\d+:\d+)_?UTC-(\w+)$")
+        pattern = re.compile("^(.*)-(\d+|\d+-\d+-\d+_\d+:\d+)_?UTC-(\w+)\.part$")
         for archive in self.archive_list:
             f = pattern.match(archive)
             if not f:
