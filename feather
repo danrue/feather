@@ -320,8 +320,14 @@ class pr_tarsnap(object):
             if a backup does not complete for some reason.
 
             This function looks .part files older than 'days' and removes them.
+
+            We want to delete multiple backups in one go to optimize tarsnap bandwidth cost
+            See: http://mail.tarsnap.com/tarsnap-users/msg00590.html
+            Requires tarsnap version >= 1.0.27
         '''
         pattern = re.compile("^(.*)-(\d+|\d+-\d+-\d+_\d+:\d+)_?UTC-(\w+)$")
+        cmd = self.tarsnap_cmd() + ["-d"]
+        archives_to_delete = False
         for archive in self.archive_list:
             f = pattern.match(archive)
             if not f:
@@ -340,12 +346,15 @@ class pr_tarsnap(object):
 
             if ((datetime.datetime.utcnow()-ts) >
                          datetime.timedelta(days=days)):
-                if self.verbosity > 0: print "Deleting archive", archive
-                cmd = self.tarsnap_cmd() + ["-d", "-f", archive]
-                if self.verbosity > 2: print cmd
-                if not self.dry_run:
-                    output = self.execute(cmd)
-                if self.verbosity > 2: print output
+                if self.verbosity > 0: print "Adding archive", archive, "to delete list"
+                cmd += ["-f", archive]
+                archives_to_delete = True
+        
+        if archives_to_delete:
+            if self.verbosity > 2: print cmd
+            if not self.dry_run:
+                output = self.execute(cmd)
+            if self.verbosity > 2: print output
 
     def prune_backups(self):
         '''
@@ -356,6 +365,7 @@ class pr_tarsnap(object):
 
             We want to delete multiple backups in one go to optimize tarsnap bandwidth cost
             See: http://mail.tarsnap.com/tarsnap-users/msg00590.html
+            Requires tarsnap version >= 1.0.27
 
         '''
         self.populate_archive_list()
