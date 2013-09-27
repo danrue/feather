@@ -354,6 +354,9 @@ class pr_tarsnap(object):
             2) That the archive to remove is older than the predefined period
                of time.
 
+            We want to delete multiple backups in one go to optimize tarsnap bandwidth cost
+            See: http://mail.tarsnap.com/tarsnap-users/msg00590.html
+
         '''
         self.populate_archive_list()
         self.archive_list.sort()
@@ -373,6 +376,8 @@ class pr_tarsnap(object):
             else:
                 quantity[path+type] = 1
 
+        cmd = self.tarsnap_cmd() + ["-d"]
+        archives_to_delete = False
         for archive in self.archive_list:
             f = pattern.match(archive)
             if not f:
@@ -393,13 +398,16 @@ class pr_tarsnap(object):
             if ((datetime.datetime.utcnow()-ts) >
                          self.schedule.schedule_timedelta(type)):
                 if self.schedule.rotate(type, quantity[path+type]):
-                    if self.verbosity > 0: print "Deleting archive", archive
+                    if self.verbosity > 0: print "Adding archive", archive, "to delete list"
                     quantity[path+type] -= 1 # remove an item from quantity dict
-                    cmd = self.tarsnap_cmd() + ["-d", "-f", archive]
-                    if self.verbosity > 2: print cmd
-                    if not self.dry_run:
-                        output = self.execute(cmd)
-                    if self.verbosity > 2: print output
+                    cmd += ["-f", archive]
+                    archives_to_delete = True
+        
+        if archives_to_delete:
+            if self.verbosity > 2: print cmd
+            if not self.dry_run:
+                output = self.execute(cmd)
+            if self.verbosity > 2: print output
 
     def check_valid_path(self, path):
         if not (os.path.isdir(path) or os.path.isfile(path)):
