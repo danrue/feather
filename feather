@@ -72,7 +72,7 @@ class backup_schedule(set):
         return quantity > self.schedule[schedule]['always_keep']
 
     def timeok(self, schedule):
-        ts = time.strftime("%H%M", time.gmtime())
+        ts = time.strftime("%H:%M", time.gmtime())
         if 'after' in self.schedule[schedule]:
             if self.schedule[schedule]['after'] > ts:
                 return False
@@ -225,7 +225,7 @@ class pr_tarsnap(object):
     def exists(self, base, schedule):
         if self.verbosity > 1:
             print "Checking if the following exists: %s %s" % (base, schedule)
-        pattern = re.compile("^(.*)-(\d+)UTC-(\w+)$")
+        pattern = re.compile("^(.*)-(\d+|\d+-\d+-\d+_\d+:\d+)_?UTC-(\w+)$")
 
         # Loop through the list of archives to see if we can find one that
         # is within the schedule for the given path.
@@ -243,8 +243,11 @@ class pr_tarsnap(object):
                 try:
                     ts = datetime.datetime.strptime(ts, "%Y%m%d%H%M")
                 except:
-                    sys.stderr.write("Unknown timestamp: %s\n" % archive)
-                    continue
+                    try:
+                        ts = datetime.datetime.strptime(ts,"%Y-%m-%d_%H:%M")
+                    except:
+                        sys.stderr.write("Unknown timestamp: %s\n" % archive)
+                        continue
                 if ((datetime.datetime.utcnow()-ts) <
                      self.schedule.schedule_timedelta(schedule)):
                     return True
@@ -284,7 +287,7 @@ class pr_tarsnap(object):
                     if self.verbosity > 1:
                         print "Skipping due to time of day:", backup, snapshot
                     continue
-                ts = datetime.datetime.utcnow().strftime("%Y%m%d%H%MUTC")
+                ts = datetime.datetime.utcnow().strftime("%Y-%m-%d_%H:%M_UTC")
                 archive_name = backup+"-"+ts+"-"+snapshot
                 if self.verbosity > 0:
                     print "Taking backup", archive_name
@@ -317,8 +320,14 @@ class pr_tarsnap(object):
             if a backup does not complete for some reason.
 
             This function looks .part files older than 'days' and removes them.
+
+            We want to delete multiple backups in one go to optimize tarsnap bandwidth cost
+            See: http://mail.tarsnap.com/tarsnap-users/msg00590.html
+            Requires tarsnap version >= 1.0.27
         '''
-        pattern = re.compile("^(.*)-(\d+)UTC-(\w+)\.part$")
+        pattern = re.compile("^(.*)-(\d+|\d+-\d+-\d+_\d+:\d+)_?UTC-(\w+)\.part$")
+        cmd = self.tarsnap_cmd() + ["-d"]
+        archives_to_delete = False
         for archive in self.archive_list:
             f = pattern.match(archive)
             if not f:
@@ -329,17 +338,23 @@ class pr_tarsnap(object):
             try:
                 ts = datetime.datetime.strptime(ts, "%Y%m%d%H%M")
             except:
-                sys.stderr.write("Unknown timestamp: %s\n" % archive)
-                continue
+                try:
+                    ts = datetime.datetime.strptime(ts,"%Y-%m-%d_%H:%M")
+                except:
+                    sys.stderr.write("Unknown timestamp: %s\n" % archive)
+                    continue
 
             if ((datetime.datetime.utcnow()-ts) >
                          datetime.timedelta(days=days)):
-                if self.verbosity > 0: print "Deleting archive", archive
-                cmd = self.tarsnap_cmd() + ["-d", "-f", archive]
-                if self.verbosity > 2: print cmd
-                if not self.dry_run:
-                    output = self.execute(cmd)
-                if self.verbosity > 2: print output
+                if self.verbosity > 0: print "Adding archive", archive, "to delete list"
+                cmd += ["-f", archive]
+                archives_to_delete = True
+
+        if archives_to_delete:
+            if self.verbosity > 2: print cmd
+            if not self.dry_run:
+                output = self.execute(cmd)
+            if self.verbosity > 2: print output
 
     def prune_backups(self):
         '''
@@ -348,10 +363,14 @@ class pr_tarsnap(object):
             2) That the archive to remove is older than the predefined period
                of time.
 
+            We want to delete multiple backups in one go to optimize tarsnap bandwidth cost
+            See: http://mail.tarsnap.com/tarsnap-users/msg00590.html
+            Requires tarsnap version >= 1.0.27
+
         '''
         self.populate_archive_list()
         self.archive_list.sort()
-        pattern = re.compile("^(.*)-(\d+)UTC-(\w+)$")
+        pattern = re.compile("^(.*)-(\d+|\d+-\d+-\d+_\d+:\d+)_?UTC-(\w+)$")
 
         quantity = {}
         # Count up how many of each type of archive exist
@@ -367,6 +386,8 @@ class pr_tarsnap(object):
             else:
                 quantity[path+type] = 1
 
+        cmd = self.tarsnap_cmd() + ["-d"]
+        archives_to_delete = False
         for archive in self.archive_list:
             f = pattern.match(archive)
             if not f:
@@ -378,19 +399,25 @@ class pr_tarsnap(object):
             try:
                 ts = datetime.datetime.strptime(ts, "%Y%m%d%H%M")
             except:
-                sys.stderr.write("Unknown timestamp: %s\n" % archive)
-                continue
+                try:
+                    ts = datetime.datetime.strptime(ts,"%Y-%m-%d_%H:%M")
+                except:
+                    sys.stderr.write("Unknown timestamp: %s\n" % archive)
+                    continue
 
             if ((datetime.datetime.utcnow()-ts) >
                          self.schedule.schedule_timedelta(type)):
                 if self.schedule.rotate(type, quantity[path+type]):
-                    if self.verbosity > 0: print "Deleting archive", archive
+                    if self.verbosity > 0: print "Adding archive", archive, "to delete list"
                     quantity[path+type] -= 1 # remove an item from quantity dict
-                    cmd = self.tarsnap_cmd() + ["-d", "-f", archive]
-                    if self.verbosity > 2: print cmd
-                    if not self.dry_run:
-                        output = self.execute(cmd)
-                    if self.verbosity > 2: print output
+                    cmd += ["-f", archive]
+                    archives_to_delete = True
+
+        if archives_to_delete:
+            if self.verbosity > 2: print cmd
+            if not self.dry_run:
+                output = self.execute(cmd)
+            if self.verbosity > 2: print output
 
     def check_valid_path(self, path):
         if not (os.path.isdir(path) or os.path.isfile(path)):

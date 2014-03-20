@@ -1,0 +1,1 @@
+*/5 * * * * root /usr/bin/python /root/scripts/feather/feather -vvvvv /etc/feather.yaml >> /var/log/feather.log
