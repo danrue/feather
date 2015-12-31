@@ -1,21 +1,27 @@
-Feather is a tarsnap script written in python that performs and maintains a set
-of backups as defined by a yaml configuration file.  
+Feather is a tarsnap backup scheduler that performs and maintains a set of
+backups as defined by a yaml configuration file.
 
-Features: 
- - Dynamic scheduling
- - Keep an arbitrary number of backups of each schedule type
- - Restrict schedules based on time of day
- - Restrict feather run to a certain amount of wall time (max_runtime)
- - Multiple backup paths per tarsnap 
- - Multiple exclude list per tarsnap
+### Features
+- Dynamic scheduling
+- Keep an arbitrary number of backups of each schedule type
+- Restrict schedules based on time of day
+- Restrict feather run to a certain amount of wall time (max_runtime)
+- Multiple backup paths per tarsnap
+- Multiple exclude list per tarsnap
 
+### Requirements
+- Python 2
+- pyyaml
+
+### Usage
 Feather is designed to be run from cron like this:
 
- */5 * * * * /usr/local/bin/feather /usr/local/etc/feather.yaml 
+ */5 * * * * /usr/local/bin/feather /usr/local/etc/feather.yaml
 
+### Configuration
 The best way to understand feather is to read an example configuration file:
 
-
+```yaml
 # Global paths, if different from default
 cachedir: /usr/home/drue/tarsnap/cachedir
 keyfile: /usr/home/drue/tarsnap/tarsnap.key
@@ -29,12 +35,12 @@ max_runtime: 3600
 
 # Define the schedule
 #
-# period: Seconds.  A backup is taken every period.
-# always_keep: Number of backups to keep of a particular period, before 
-#              pruning old backups.  Backups younger than now()-period are
+# period: Seconds. A backup is taken every period.
+# always_keep: Number of backups to keep of a particular period, before
+#              pruning old backups. Backups younger than now()-period are
 #              never removed.
-# implies:  Include another defined schedule.  i.e. if WEEKLY implies
-#           MONTHLY, and you ask for WEEKLY backups, you will get WEEKLY 
+# implies:  Include another defined schedule. i.e. if WEEKLY implies
+#           MONTHLY, and you ask for WEEKLY backups, you will get WEEKLY
 #           and MONTHLY.
 # before/after: Restrict running to a certain time of day (UTC)
 #
@@ -77,10 +83,10 @@ backups:
     - path: /etc
   - music:
     - schedule: monthly
-    - path: 
+    - path:
       - /home/joe/music
       - /home/bob/music
     - exclude:
       - /home/joe/music/bieber # Not paying to back this up
       - /home/bob/music/backstreet_boys #not paying to store this either
-
+```
