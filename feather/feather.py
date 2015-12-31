@@ -1,28 +1,5 @@
 #!/usr/bin/env python2
 
-'''
-
-feather is a tarsnap script that performs and maintains a set of backups
-as defined in a yaml configuration file.
-
-TODO:
-    - Order of backups (!!omap)
-    - use localtime instead of hardcoding UTC
-
- ----------------------------------------------------------------------------
- "THE BEER-WARE LICENSE" (Revision 43):
-
- <drue@therub.org> wrote this file. As long as you retain this notice and
- never sue us for anything, you can do whatever you want with this stuff.
- If we meet some day, and you think this stuff is worth it, you can buy me
- a beer in return. -Dan Rue
- ----------------------------------------------------------------------------
-
-Generous support for feather was provided by Prometheus Research, LLC
-
-'''
-
-
 import datetime
 import optparse
 import os
