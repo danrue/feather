@@ -1,5 +1,5 @@
-Feather is a tarsnap script written in python that performs and maintains a set
-of backups as defined by a yaml configuration file.
+Feather is a tarsnap backup scheduler that performs and maintains a set of
+backups as defined by a yaml configuration file.
 
 ### Features
 - Dynamic scheduling
