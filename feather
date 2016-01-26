@@ -183,9 +183,15 @@ class pr_tarsnap(object):
             path = self.backups[key]['path']
             if isinstance(path, list):
                 for item in path:
-                    self.check_valid_path(item)
+                    path_to_check = item
+                    if 'workingpath' in self.backups[key]:
+                        path_to_check = self.backups[key]['workingpath'] + '/' + item
+                    self.check_valid_path(path_to_check)
             else:
-                self.check_valid_path(path)
+                path_to_check = path
+                if 'workingpath' in self.backups[key]:
+                    path_to_check = self.backups[key]['workingpath'] + '/' + path_to_check
+                self.check_valid_path(path_to_check)
 
         self.populate_archive_list()
 
@@ -256,7 +262,7 @@ class pr_tarsnap(object):
 
     def execute(self, cmd):
         self.handle = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
+                                        stderr=subprocess.PIPE)
         (stdout, stderr) = self.handle.communicate()
         if self.handle.returncode > 0:
             print stderr
@@ -269,6 +275,10 @@ class pr_tarsnap(object):
                 excl_path = self.backups[backup]['exclude']
             else:
                 excl_path = None
+            if 'workingpath' in self.backups[backup]:
+                working_path = self.backups[backup]['workingpath']
+            else:
+                working_path = None
             backup_schedule = self.backups[backup]['schedule']
             try:
                 snapshots = self.schedule.get_schedule(backup_schedule)
@@ -301,6 +311,8 @@ class pr_tarsnap(object):
                             cmd += ['--exclude', pth]
                     else:
                         cmd += ['--exclude', excl_path]
+                if working_path:
+                    cmd += ['-C', working_path]
                 if isinstance(backup_path, list):
                     cmd.extend(backup_path)
                 else:
