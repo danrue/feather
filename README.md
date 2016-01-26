@@ -83,10 +83,12 @@ backups:
     - path: /etc
   - music:
     - schedule: monthly
-    - path:
-      - /home/joe/music
-      - /home/bob/music
+    - workingpath: /home
+    - path: 
+      - joe/music
+      - bob/music
     - exclude:
-      - /home/joe/music/bieber # Not paying to back this up
-      - /home/bob/music/backstreet_boys #not paying to store this either
+      - joe/music/bieber # Not paying to back this up
+      - bob/music/backstreet_boys # not paying to store this either
+
 ```

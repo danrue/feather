@@ -185,12 +185,14 @@ class pr_tarsnap(object):
                 for item in path:
                     path_to_check = item
                     if 'workingpath' in self.backups[key]:
-                        path_to_check = self.backups[key]['workingpath'] + '/' + item
+                        wp = self.backups[key]['workingpath']
+                        path_to_check = os.path.join(wp, item)
                     self.check_valid_path(path_to_check)
             else:
                 path_to_check = path
                 if 'workingpath' in self.backups[key]:
-                    path_to_check = self.backups[key]['workingpath'] + '/' + path_to_check
+                    wp = self.backups[key]['workingpath']
+                    path_to_check = os.path.join(wp, path_to_check)
                 self.check_valid_path(path_to_check)
 
         self.populate_archive_list()
