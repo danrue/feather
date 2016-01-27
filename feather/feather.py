@@ -1,5 +1,3 @@
-#!/usr/bin/env python2
-
 import datetime
 import optparse
 import os
@@ -104,7 +102,7 @@ class lock(object):
         file(pidfile,'w+').write("%s" % str(os.getpid()))
 
 
-class pr_tarsnap(object):
+class feather(object):
 
     archive_list = []
 
@@ -116,9 +114,8 @@ class pr_tarsnap(object):
 
         self.dry_run = dry_run
 
-        f = open(yaml_file)
-        config = yaml.load(f.read())
-        f.close()
+        with open(yaml_file) as f:
+            config = yaml.load(f.read())
 
         self.max_runtime = config.get('max_runtime', None)
         if self.max_runtime:
@@ -434,7 +431,7 @@ def main():
     PIDFILE = "/tmp/feather.pid"
     lock(PIDFILE)
     os.nice(20)
-    b = pr_tarsnap(args[0], options.verbosity, options.dry_run)
+    b = feather(args[0], options.verbosity, options.dry_run)
     b.run_backups()
     b.prune_backups()
     b.prune_parts()

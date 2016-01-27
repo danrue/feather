@@ -56,7 +56,8 @@ setup(
     tests_require=['pytest'],
 
     package_data={
-        'feather': ['feather.yaml.dist'],
+        'feather': ['examples/feather.yaml.dist',
+                    'examples/feather.cron.d.example'],
     },
 
     # To provide executable scripts, use entry points in preference to the
