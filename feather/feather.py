@@ -1,3 +1,5 @@
+from __future__ import print_function
+from builtins import object, str
 import datetime
 import optparse
 import os
@@ -197,16 +199,17 @@ class feather(object):
         cmd = self.tarsnap_cmd() + ["--list-archives"]
 
         if self.verbosity > 1:
-            print "Listing archives using tarsnap --list-archives"
-            if self.verbosity > 2: print cmd
+            print("Listing archives using tarsnap --list-archives")
+            if self.verbosity > 2: print(cmd)
         output = self.execute(cmd)
-        if self.verbosity > 2: print output
+        if self.verbosity > 2: print(output)
         self.archive_list = output.splitlines()
         self.archive_list.sort()
 
     def exists(self, base, schedule):
         if self.verbosity > 1:
-            print "Checking if the following exists: %s %s" % (base, schedule)
+            print("Checking if the following exists: {0} {1}".
+                   format(base, schedule))
         pattern = re.compile("^(.*)-(\d+|\d+-\d+-\d+_\d+:\d+)_?UTC-(\w+)$")
 
         # Loop through the list of archives to see if we can find one that
@@ -241,7 +244,7 @@ class feather(object):
                                         stderr=subprocess.PIPE)
         (stdout, stderr) = self.handle.communicate()
         if self.handle.returncode > 0:
-            print stderr
+            print(stderr)
         return stdout
 
     def run_backups(self):
@@ -263,7 +266,7 @@ class feather(object):
 
             for snapshot in snapshots:
                 if self.verbosity > 1:
-                    print "Processing", backup, snapshot
+                    print("Processing {0} {1}".format(backup, snapshot))
                 if self.exists(backup, snapshot):
                     # backup already existing within schedule window
                     continue
@@ -271,12 +274,12 @@ class feather(object):
                     # Skip the snapshot if current time is not within
                     # before: and after:, if set.
                     if self.verbosity > 1:
-                        print "Skipping due to time of day:", backup, snapshot
+                        print("Skipping due to time of day: {0} {1}".format(backup, snapshot))
                     continue
                 ts = datetime.datetime.utcnow().strftime("%Y-%m-%d_%H:%M_UTC")
                 archive_name = backup+"-"+ts+"-"+snapshot
                 if self.verbosity > 0:
-                    print "Taking backup", archive_name
+                    print("Taking backup {0}".format(archive_name))
                 cmd = self.tarsnap_cmd()
                 if self.backup_args:
                     cmd += self.backup_args
@@ -296,10 +299,10 @@ class feather(object):
                 if self.dry_run:
                     cmd += ["--dry-run"]
                 if self.verbosity > 2:
-                    print cmd
+                    print(cmd)
                 output = self.execute(cmd)
                 if self.verbosity > 2:
-                    print output
+                    print(output)
 
 
     def prune_parts(self, days=7):
@@ -334,15 +337,15 @@ class feather(object):
 
             if ((datetime.datetime.utcnow()-ts) >
                          datetime.timedelta(days=days)):
-                if self.verbosity > 0: print "Adding archive", archive, "to delete list"
+                if self.verbosity > 0: print("Adding archive {0} to delete list".format(archive))
                 cmd += ["-f", archive]
                 archives_to_delete = True
 
         if archives_to_delete:
-            if self.verbosity > 2: print cmd
+            if self.verbosity > 2: print(cmd)
             if not self.dry_run:
                 output = self.execute(cmd)
-            if self.verbosity > 2: print output
+            if self.verbosity > 2: print(output)
 
     def prune_backups(self):
         '''
@@ -396,16 +399,16 @@ class feather(object):
             if ((datetime.datetime.utcnow()-ts) >
                          self.schedule.schedule_timedelta(type)):
                 if self.schedule.rotate(type, quantity[path+type]):
-                    if self.verbosity > 0: print "Adding archive", archive, "to delete list"
+                    if self.verbosity > 0: print("Adding archive {0} to delete list".format(archive))
                     quantity[path+type] -= 1 # remove an item from quantity dict
                     cmd += ["-f", archive]
                     archives_to_delete = True
 
         if archives_to_delete:
-            if self.verbosity > 2: print cmd
+            if self.verbosity > 2: print(cmd)
             if not self.dry_run:
                 output = self.execute(cmd)
-            if self.verbosity > 2: print output
+            if self.verbosity > 2: print(output)
 
     def check_valid_path(self, path):
         if not (os.path.isdir(path) or os.path.isfile(path)):

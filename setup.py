@@ -10,7 +10,7 @@ with open('README.md') as readme_file:
 setup(
     name='tarsnap-feather',
 
-    version='1.2.0',
+    version='v1.2.0',
 
     description=('Feather is a tarsnap backup scheduler that performs ',
                  'and maintains a set of backups as defined by a yaml ',
@@ -38,21 +38,15 @@ setup(
     ],
 
     keywords='tarsnap backups',
-
-    # You can just specify the packages manually here if your project is
-    # simple. Or you can use find_packages().
     packages=['feather'],
-
-    install_requires=['pyyaml'],
-
+    package_dir={'feather': 'feather'},
+    include_package_data=True,
+    install_requires=['pyyaml', 'future'],
     package_data={
         'tarsnap-feather': ['examples/feather.yaml.dist',
                             'examples/feather.cron.d.example'],
     },
 
-    # To provide executable scripts, use entry points in preference to the
-    # "scripts" keyword. Entry points provide cross-platform support and allow
-    # pip to create the appropriate form of executable for the target platform.
     entry_points={
         'console_scripts': [
             'tarsnap-feather=feather.feather:main',
