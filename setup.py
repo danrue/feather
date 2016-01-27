@@ -1,24 +1,21 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
-# To use a consistent encoding
-from codecs import open
-from os import path
 
-here = path.abspath(path.dirname(__file__))
-
-# Get the long description from the README file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
+with open('README.md') as readme_file:
+    readme = readme_file.read()
 
 setup(
-    name='feather',
+    name='tarsnap-feather',
 
     version='1.2.0',
 
     description=('Feather is a tarsnap backup scheduler that performs ',
                  'and maintains a set of backups as defined by a yaml ',
                  'configuration file.'),
-    long_description=long_description,
+    long_description=readme,
     url='https://github.com/danrue/feather',
     author='Dan Rue',
     author_email='drue@therub.org',
@@ -44,20 +41,13 @@ setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=find_packages(exclude=['contrib', 'docs', 'tests']),
-
-    # Alternatively, if you want to distribute just a my_module.py, uncomment
-    # this:
-    #   py_modules=["my_module"],
+    packages=['feather'],
 
     install_requires=['pyyaml'],
 
-    setup_requires=['pytest-runner'],
-    tests_require=['pytest'],
-
     package_data={
-        'feather': ['examples/feather.yaml.dist',
-                    'examples/feather.cron.d.example'],
+        'tarsnap-feather': ['examples/feather.yaml.dist',
+                            'examples/feather.cron.d.example'],
     },
 
     # To provide executable scripts, use entry points in preference to the
@@ -65,7 +55,7 @@ setup(
     # pip to create the appropriate form of executable for the target platform.
     entry_points={
         'console_scripts': [
-            'feather=feather.feather:main',
+            'tarsnap-feather=feather.feather:main',
         ],
     },
 )

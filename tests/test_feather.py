@@ -3,7 +3,7 @@ import pytest
 import yaml
 
 def test_000_schedule():
-    with open("sources/test_000_schedule.yaml") as f:
+    with open("tests/sources/test_000_schedule.yaml") as f:
         config = yaml.load(f.read())
     schedule = feather.backup_schedule(config['schedule'])
     assert 'monthly' in schedule
