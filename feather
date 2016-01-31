@@ -266,7 +266,7 @@ class pr_tarsnap(object):
         self.handle = subprocess.Popen(cmd, stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE)
         (stdout, stderr) = self.handle.communicate()
-        if self.handle.returncode > 0:
+        if (self.verbosity > 0 and self.dry_run) or self.handle.returncode > 0:
             print stderr
         return stdout
 
@@ -304,6 +304,8 @@ class pr_tarsnap(object):
                 if self.verbosity > 0:
                     print "Taking backup", archive_name
                 cmd = self.tarsnap_cmd()
+                if self.dry_run:
+                    cmd += ["--dry-run"]
                 if self.backup_args:
                     cmd += self.backup_args
                 cmd += ["-c", "-f", archive_name]
@@ -319,8 +321,6 @@ class pr_tarsnap(object):
                     cmd.extend(backup_path)
                 else:
                     cmd += [backup_path]
-                if self.dry_run:
-                    cmd += ["--dry-run"]
                 if self.verbosity > 2:
                     print cmd
                 output = self.execute(cmd)
