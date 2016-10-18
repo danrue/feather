@@ -23,7 +23,9 @@ Generous support for feather was provided by Prometheus Research, LLC
 '''
 
 
+import base64
 import datetime
+import hashlib
 import optparse
 import os
 import re
@@ -454,7 +456,12 @@ def main():
     if len(args) != 1:
         parser.error("YAML config file not specified")
 
-    PIDFILE = "/tmp/feather.pid"
+    # Generate a unique pid lock file per config location
+    config_path = os.path.realpath(args[0])
+    PIDFILE = "/tmp/feather-%s.pid" % base64.b64encode(
+                                        hashlib.sha1(
+                                          config_path).digest())[:8]
+
     lock(PIDFILE)
     os.nice(20)
     b = pr_tarsnap(args[0], options.verbosity, options.dry_run)
