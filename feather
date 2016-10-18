@@ -22,8 +22,6 @@ Generous support for feather was provided by Prometheus Research, LLC
 
 '''
 
-
-import base64
 import datetime
 import hashlib
 import optparse
@@ -458,9 +456,7 @@ def main():
 
     # Generate a unique pid lock file per config location
     config_path = os.path.realpath(args[0])
-    PIDFILE = "/tmp/feather-%s.pid" % base64.b64encode(
-                                        hashlib.sha1(
-                                          config_path).digest())[:8]
+    PIDFILE = "/tmp/feather-%s.pid" % hashlib.md5(config_path).hexdigest()[:8]
 
     lock(PIDFILE)
     os.nice(20)
